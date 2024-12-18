@@ -1,26 +1,37 @@
 package telran.producer.consumer;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class Receiver extends Thread {
     private MessageBox messageBox;
-    private AtomicBoolean stopFlag;
 
-    public Receiver(MessageBox messageBox, AtomicBoolean stopFlag) {
+    public Receiver(MessageBox messageBox) {
         this.messageBox = messageBox;
-        this.stopFlag = stopFlag;
+    }
+
+    public void setMessageBox(MessageBox messageBox) {
+        this.messageBox = messageBox;
     }
 
     @Override
     public void run() {
-        while (!stopFlag.get()) {
-            try {
-                String message = messageBox.take();
-                System.out.printf("Thread: %s, message: %s\n", getName(), message);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        String message = null;
+        try {
+            while (true) {
+
+                message = messageBox.take();
+                process(message);
+
             }
+        } catch (InterruptedException e) {
+            do {
+                message = messageBox.poll();
+                if (message != null) {
+                    process(message);
+                }
+            } while (message != null);
         }
-        System.out.printf("Thread: %s stopped.\n", getName());
+    }
+
+    private void process(String message) {
+        System.out.printf("Thread: %s, message: %s\n", getName(), message);
     }
 }
